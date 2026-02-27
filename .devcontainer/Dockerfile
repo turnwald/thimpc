@@ -26,11 +26,13 @@ RUN pip install \
     do-mpc \
     jupyterlab
 
+# Disable token authentication
+RUN mkdir -p /root/.jupyter && \
+    echo "c.IdentityProvider.token = ''" >> /root/.jupyter/jupyter_server_config.py && \
+    echo "c.ServerApp.password = ''" >> /root/.jupyter/jupyter_server_config.py
+
 # Working directory inside container
 WORKDIR /workspace
 
 # Expose JupyterLab port
 EXPOSE 8888
-
-# Default command: launch JupyterLab
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
