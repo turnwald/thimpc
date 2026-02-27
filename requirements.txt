@@ -1,0 +1,8 @@
+casadi
+osqp
+numpy
+scipy
+matplotlib
+control
+do-mpc
+jupyterlab
