@@ -7,9 +7,11 @@
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
   "forwardPorts": [8888],
-  //"postStartCommand": "/usr/local/bin/jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --notebook-dir=/workspace",
   "customizations": {
     "vscode": {
+      "settings": {
+        "dev.containers.mountWaylandSocket": false
+      },
       "extensions": [
         "ms-python.python",
         "ms-toolsai.jupyter"
