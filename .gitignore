@@ -138,6 +138,7 @@ celerybeat.pid
 .env
 .envrc
 .venv
+.venv/
 env/
 venv/
 ENV/
@@ -158,6 +159,10 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Chapter 4 generated artifacts
+outputs/
+.Trash-0/
 
 # Pyre type checker
 .pyre/

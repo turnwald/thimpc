@@ -1,5 +1,8 @@
 FROM python:3.11-slim-bookworm
 
+ENV PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/workspace
+
 # System dependencies required by CasADi, IPOPT, and build tools
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -15,21 +18,9 @@ RUN apt-get update && apt-get install -y \
 # Upgrade pip
 RUN pip install --upgrade pip
 
-# Python packages
-RUN pip install \
-    casadi \
-    osqp \
-    numpy \
-    scipy \
-    matplotlib \
-    control \
-    do-mpc \
-    jupyterlab
-
-# Disable token authentication
-RUN mkdir -p /root/.jupyter && \
-    echo "c.IdentityProvider.token = ''" >> /root/.jupyter/jupyter_server_config.py && \
-    echo "c.ServerApp.password = ''" >> /root/.jupyter/jupyter_server_config.py
+# Python packages shared by local devcontainers and GitLab validation
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
 
 # Working directory inside container
 WORKDIR /workspace

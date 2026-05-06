@@ -1,0 +1,13 @@
+.git
+.pytest_cache
+.mypy_cache
+.ipynb_checkpoints
+__pycache__
+*.pyc
+.venv
+.venv/
+venv
+env
+outputs
+studies/*/outputs
+.Trash-0

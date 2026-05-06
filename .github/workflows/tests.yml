@@ -1,0 +1,38 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  chapter4:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      MPLBACKEND: Agg
+      PIP_NO_CACHE_DIR: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential cmake gfortran liblapack-dev libblas-dev pkg-config
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Validate studies
+        run: |
+          python -m compileall controllers mpc systems scenarios tools tests
+          if find studies -name 'walkthrough_solution.ipynb' | grep -q .; then
+            python tools/create_student_material.py
+            git diff --exit-code studies
+          fi
+          python -m pytest -q
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            THIMPC_RELEASE_MODE=public python -m pytest -q
+            python tools/check_student_release.py
+          fi

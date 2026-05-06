@@ -1,8 +1,11 @@
-casadi
-osqp
 numpy
 scipy
 matplotlib
+casadi
+osqp
 control
-do-mpc
 jupyterlab
+notebook
+nbconvert
+ipykernel
+pytest
