@@ -7,6 +7,7 @@
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
   "forwardPorts": [8888],
+  "postStartCommand": "bash /workspace/.devcontainer/start.sh",
   "customizations": {
     "vscode": {
       "settings": {
