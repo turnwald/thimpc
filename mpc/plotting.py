@@ -2,28 +2,30 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-
-import matplotlib
-
-if "MPLBACKEND" not in os.environ:
-    matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def savefig(path: str | Path) -> None:
-    """Save the current figure with lecture-friendly defaults."""
+def savefig(path: str | Path, fig: plt.Figure | None = None) -> None:
+    """Save a figure with lecture-friendly defaults without closing it."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    plt.tight_layout()
-    plt.savefig(path, dpi=160)
-    plt.close()
+    figure = plt.gcf() if fig is None else fig
+    figure.tight_layout()
+    figure.savefig(path, dpi=160)
 
 
-def plot_attitude_time(path: str | Path, t: np.ndarray, runs: dict[str, tuple[np.ndarray, np.ndarray]], bounds: dict[str, float]) -> None:
+def plot_attitude_time(
+    path: str | Path,
+    t: np.ndarray,
+    runs: dict[str, tuple[np.ndarray, np.ndarray]],
+    bounds: dict[str, float],
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, np.ndarray]:
     """Plot theta, omega, and input for attitude-control runs."""
     fig, axes = plt.subplots(3, 1, figsize=(8.0, 7.0), sharex=True)
     for label, (X, U) in runs.items():
@@ -42,7 +44,12 @@ def plot_attitude_time(path: str | Path, t: np.ndarray, runs: dict[str, tuple[np
     axes[0].grid(True, alpha=0.25)
     axes[1].grid(True, alpha=0.25)
     axes[2].grid(True, alpha=0.25)
-    savefig(path)
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, axes
 
 
 def plot_robot_top_view(
@@ -52,10 +59,12 @@ def plot_robot_top_view(
     radius: float,
     inner_radius: float,
     outer_radius: float,
-) -> None:
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot robot trajectories, reference circle, obstacle, wall, and corridor."""
-    plt.figure(figsize=(7.0, 7.0))
-    ax = plt.gca()
+    fig, ax = plt.subplots(figsize=(7.0, 7.0))
     theta = np.linspace(0.0, 2.0 * np.pi, 300)
     ax.plot(reference_xy[:, 0], reference_xy[:, 1], "k--", linewidth=1.2, label="reference")
     ax.plot(inner_radius * np.cos(theta), inner_radius * np.sin(theta), color="tab:red", linewidth=1.2, label="obstacle boundary")
@@ -72,4 +81,9 @@ def plot_robot_top_view(
     ax.set_ylabel("y [m]")
     ax.grid(True, alpha=0.25)
     ax.legend(loc="best")
-    savefig(path)
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax

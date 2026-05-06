@@ -3,13 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
-
-import matplotlib
-
-if "MPLBACKEND" not in os.environ:
-    matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -48,48 +42,86 @@ def generate_data(samples: int, seed: int = 7) -> tuple[np.ndarray, np.ndarray]:
     return errors, inputs
 
 
-def plot_prediction_eta(path: Path, measured: np.ndarray, nominal: np.ndarray, learned: np.ndarray) -> None:
+def plot_prediction_eta(
+    path: Path,
+    measured: np.ndarray,
+    nominal: np.ndarray,
+    learned: np.ndarray,
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
     idx = np.arange(measured.shape[0])
-    plt.figure(figsize=(8.0, 4.4))
-    plt.plot(idx, measured[:, 1], label="measured eta[k+1]", linewidth=1.6)
-    plt.plot(idx, nominal[:, 1], label="nominal prediction", linewidth=1.2)
-    plt.plot(idx, learned[:, 1], label="learned prediction", linewidth=1.2)
-    plt.xlabel("test sample")
-    plt.ylabel("next lateral error eta")
-    plt.grid(True, alpha=0.25)
-    plt.legend(loc="best")
-    savefig(path)
+    fig, ax = plt.subplots(figsize=(8.0, 4.4))
+    ax.plot(idx, measured[:, 1], label="measured eta[k+1]", linewidth=1.6)
+    ax.plot(idx, nominal[:, 1], label="nominal prediction", linewidth=1.2)
+    ax.plot(idx, learned[:, 1], label="learned prediction", linewidth=1.2)
+    ax.set_xlabel("test sample")
+    ax.set_ylabel("next lateral error eta")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best")
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax
 
 
-def plot_residual_error(path: Path, measured: np.ndarray, nominal: np.ndarray, learned: np.ndarray) -> None:
+def plot_residual_error(
+    path: Path,
+    measured: np.ndarray,
+    nominal: np.ndarray,
+    learned: np.ndarray,
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
     nominal_error = measured - nominal
     learned_error = measured - learned
     idx = np.arange(measured.shape[0])
-    plt.figure(figsize=(8.0, 4.4))
-    plt.plot(idx, nominal_error[:, 1], label="nominal eta residual")
-    plt.plot(idx, learned_error[:, 1], label="post-learning eta error")
-    plt.xlabel("test sample")
-    plt.ylabel("prediction error")
-    plt.grid(True, alpha=0.25)
-    plt.legend(loc="best")
-    savefig(path)
+    fig, ax = plt.subplots(figsize=(8.0, 4.4))
+    ax.plot(idx, nominal_error[:, 1], label="nominal eta residual")
+    ax.plot(idx, learned_error[:, 1], label="post-learning eta error")
+    ax.set_xlabel("test sample")
+    ax.set_ylabel("prediction error")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best")
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax
 
 
-def plot_rmse(path: Path, nominal_rmse: np.ndarray, learned_rmse: np.ndarray) -> None:
+def plot_rmse(
+    path: Path,
+    nominal_rmse: np.ndarray,
+    learned_rmse: np.ndarray,
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
     labels = ["xi", "eta", "psi"]
     x = np.arange(len(labels))
     width = 0.36
-    plt.figure(figsize=(6.4, 4.4))
-    plt.bar(x - width / 2.0, nominal_rmse, width, label="nominal")
-    plt.bar(x + width / 2.0, learned_rmse, width, label="learned residual")
-    plt.xticks(x, labels)
-    plt.ylabel("one-step RMSE")
-    plt.grid(True, axis="y", alpha=0.25)
-    plt.legend(loc="best")
-    savefig(path)
+    fig, ax = plt.subplots(figsize=(6.4, 4.4))
+    ax.bar(x - width / 2.0, nominal_rmse, width, label="nominal")
+    ax.bar(x + width / 2.0, learned_rmse, width, label="learned residual")
+    ax.set_xticks(x, labels)
+    ax.set_ylabel("one-step RMSE")
+    ax.grid(True, axis="y", alpha=0.25)
+    ax.legend(loc="best")
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax
 
 
-def run_project3(samples: int, output_dir: str | Path) -> dict[str, object]:
+def run_project3(samples: int, output_dir: str | Path, *, show: bool = True, close: bool = False) -> dict[str, object]:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     figures_dir = output_dir / "figures"
@@ -112,9 +144,23 @@ def run_project3(samples: int, output_dir: str | Path) -> dict[str, object]:
     nominal_rmse = np.sqrt(np.mean(nominal_error * nominal_error, axis=0))
     learned_rmse = np.sqrt(np.mean(learned_error * learned_error, axis=0))
 
-    plot_prediction_eta(figures_dir / "prediction_vs_measured_eta.png", measured_next[test], nominal_next[test], learned_next)
-    plot_residual_error(figures_dir / "residual_prediction_error.png", measured_next[test], nominal_next[test], learned_next)
-    plot_rmse(figures_dir / "rmse_comparison.png", nominal_rmse, learned_rmse)
+    plot_prediction_eta(
+        figures_dir / "prediction_vs_measured_eta.png",
+        measured_next[test],
+        nominal_next[test],
+        learned_next,
+        show=show,
+        close=close,
+    )
+    plot_residual_error(
+        figures_dir / "residual_prediction_error.png",
+        measured_next[test],
+        nominal_next[test],
+        learned_next,
+        show=show,
+        close=close,
+    )
+    plot_rmse(figures_dir / "rmse_comparison.png", nominal_rmse, learned_rmse, show=show, close=close)
 
     metrics = {
         "train_samples": int(split),
@@ -154,7 +200,7 @@ def main() -> None:
     parser.add_argument("--samples", type=int, default=400)
     parser.add_argument("--output-dir", default="outputs/ch4_project3")
     args = parser.parse_args()
-    run_project3(args.samples, args.output_dir)
+    run_project3(args.samples, args.output_dir, show=False, close=True)
 
 
 if __name__ == "__main__":

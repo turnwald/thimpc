@@ -3,13 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
-
-import matplotlib
-
-if "MPLBACKEND" not in os.environ:
-    matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -79,35 +73,59 @@ def simulate_receding_mpc(
     return {"X": X, "U": U, "slack": slack, "statuses": statuses, "failures": failures}
 
 
-def plot_phase(path: Path, runs: dict[str, tuple[np.ndarray, np.ndarray]], x_bounds: tuple[np.ndarray, np.ndarray]) -> None:
-    plt.figure(figsize=(6.4, 5.2))
+def plot_phase(
+    path: Path,
+    runs: dict[str, tuple[np.ndarray, np.ndarray]],
+    x_bounds: tuple[np.ndarray, np.ndarray],
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
+    fig, ax = plt.subplots(figsize=(6.4, 5.2))
     for label, (X, _) in runs.items():
-        plt.plot(X[:, 0], X[:, 1], label=label)
-        plt.plot(X[0, 0], X[0, 1], "o", markersize=4)
-    plt.axvline(x_bounds[0][0], color="k", linestyle="--", linewidth=0.9)
-    plt.axvline(x_bounds[1][0], color="k", linestyle="--", linewidth=0.9)
-    plt.xlabel("theta [rad]")
-    plt.ylabel("omega [rad/s]")
-    plt.grid(True, alpha=0.25)
-    plt.legend(loc="best")
-    savefig(path)
+        ax.plot(X[:, 0], X[:, 1], label=label)
+        ax.plot(X[0, 0], X[0, 1], "o", markersize=4)
+    ax.axvline(x_bounds[0][0], color="k", linestyle="--", linewidth=0.9)
+    ax.axvline(x_bounds[1][0], color="k", linestyle="--", linewidth=0.9)
+    ax.set_xlabel("theta [rad]")
+    ax.set_ylabel("omega [rad/s]")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best")
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax
 
 
-def plot_terminal_ellipses(path: Path, P: np.ndarray, x_bounds: tuple[np.ndarray, np.ndarray]) -> None:
-    plt.figure(figsize=(6.4, 5.2))
+def plot_terminal_ellipses(
+    path: Path,
+    P: np.ndarray,
+    x_bounds: tuple[np.ndarray, np.ndarray],
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
+    fig, ax = plt.subplots(figsize=(6.4, 5.2))
     for level in [0.5, 1.5, 3.0, 6.0]:
         pts = ellipse_points(P, level)
-        plt.plot(pts[:, 0], pts[:, 1], label=f"x^T P x = {level:g}")
-    plt.axvline(x_bounds[0][0], color="k", linestyle="--", linewidth=0.9)
-    plt.axvline(x_bounds[1][0], color="k", linestyle="--", linewidth=0.9)
-    plt.axhline(x_bounds[0][1], color="k", linestyle=":", linewidth=0.9)
-    plt.axhline(x_bounds[1][1], color="k", linestyle=":", linewidth=0.9)
-    plt.xlabel("theta [rad]")
-    plt.ylabel("omega [rad/s]")
-    plt.axis("equal")
-    plt.grid(True, alpha=0.25)
-    plt.legend(loc="best")
-    savefig(path)
+        ax.plot(pts[:, 0], pts[:, 1], label=f"x^T P x = {level:g}")
+    ax.axvline(x_bounds[0][0], color="k", linestyle="--", linewidth=0.9)
+    ax.axvline(x_bounds[1][0], color="k", linestyle="--", linewidth=0.9)
+    ax.axhline(x_bounds[0][1], color="k", linestyle=":", linewidth=0.9)
+    ax.axhline(x_bounds[1][1], color="k", linestyle=":", linewidth=0.9)
+    ax.set_xlabel("theta [rad]")
+    ax.set_ylabel("omega [rad/s]")
+    ax.axis("equal")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best")
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax
 
 
 def plot_constraint_activity(
@@ -118,7 +136,10 @@ def plot_constraint_activity(
     slack: np.ndarray,
     x_bounds: tuple[np.ndarray, np.ndarray],
     u_bounds: tuple[np.ndarray, np.ndarray],
-) -> None:
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, np.ndarray]:
     margin_theta = np.minimum(X[:, 0] - x_bounds[0][0], x_bounds[1][0] - X[:, 0])
     margin_u = np.minimum(U[:, 0] - u_bounds[0][0], u_bounds[1][0] - U[:, 0])
     fig, axes = plt.subplots(3, 1, figsize=(8.0, 6.8), sharex=True)
@@ -133,10 +154,15 @@ def plot_constraint_activity(
     axes[2].set_xlabel("time [s]")
     for ax in axes:
         ax.grid(True, alpha=0.25)
-    savefig(path)
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, axes
 
 
-def run_project1(steps: int, output_dir: str | Path) -> dict[str, object]:
+def run_project1(steps: int, output_dir: str | Path, *, show: bool = True, close: bool = False) -> dict[str, object]:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     figures_dir = output_dir / "figures"
@@ -199,10 +225,22 @@ def run_project1(steps: int, output_dir: str | Path) -> dict[str, object]:
             "u_min": u_bounds[0][0],
             "u_max": u_bounds[1][0],
         },
+        show=show,
+        close=close,
     )
-    plot_phase(figures_dir / "phase_plane.png", runs, x_bounds)
-    plot_terminal_ellipses(figures_dir / "terminal_ellipses.png", P, x_bounds)
-    plot_constraint_activity(figures_dir / "constraint_activity.png", t, rate_run["X"], rate_run["U"], rate_run["slack"], x_bounds, u_bounds)
+    plot_phase(figures_dir / "phase_plane.png", runs, x_bounds, show=show, close=close)
+    plot_terminal_ellipses(figures_dir / "terminal_ellipses.png", P, x_bounds, show=show, close=close)
+    plot_constraint_activity(
+        figures_dir / "constraint_activity.png",
+        t,
+        rate_run["X"],
+        rate_run["U"],
+        rate_run["slack"],
+        x_bounds,
+        u_bounds,
+        show=show,
+        close=close,
+    )
 
     metrics = {
         "final_state_norm": {name: float(np.linalg.norm(X[-1])) for name, (X, _) in runs.items()},
@@ -241,7 +279,7 @@ def main() -> None:
     parser.add_argument("--steps", type=int, default=80)
     parser.add_argument("--output-dir", default="outputs/ch4_project1")
     args = parser.parse_args()
-    run_project1(args.steps, args.output_dir)
+    run_project1(args.steps, args.output_dir, show=False, close=True)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,7 @@
 FROM python:3.11-slim-bookworm
 
 ENV PIP_NO_CACHE_DIR=1 \
-    PYTHONPATH=/workspace \
-    MPLBACKEND=Agg
+    PYTHONPATH=/workspace
 
 # System dependencies required by CasADi, IPOPT, and build tools
 RUN apt-get update && apt-get install -y \

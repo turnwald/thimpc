@@ -2,7 +2,10 @@
 set -euo pipefail
 
 export PYTHONPATH="${PYTHONPATH:-/workspace}"
-export MPLBACKEND="${MPLBACKEND:-Agg}"
+
+# Keep Jupyter notebooks free to select an inline Matplotlib backend.
+# This also neutralizes older devcontainer images that still set MPLBACKEND=Agg.
+unset MPLBACKEND
 
 if [ -f /tmp/thimpc-jupyter.pid ] && kill -0 "$(cat /tmp/thimpc-jupyter.pid)" 2>/dev/null; then
     echo "JupyterLab already running on port 8888"

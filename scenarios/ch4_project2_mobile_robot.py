@@ -3,13 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
-
-import matplotlib
-
-if "MPLBACKEND" not in os.environ:
-    matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -137,65 +131,125 @@ def simulate_tracker(
     }
 
 
-def plot_lateral_error(path: Path, t: np.ndarray, runs: dict[str, dict[str, np.ndarray]]) -> None:
-    plt.figure(figsize=(8.0, 4.4))
+def plot_lateral_error(
+    path: Path,
+    t: np.ndarray,
+    runs: dict[str, dict[str, np.ndarray]],
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
+    fig, ax = plt.subplots(figsize=(8.0, 4.4))
     first = next(iter(runs.values()))
-    plt.fill_between(t, first["eta_min"], first["eta_max"], color="0.9", label="corridor")
+    ax.fill_between(t, first["eta_min"], first["eta_max"], color="0.9", label="corridor")
     for label, run in runs.items():
-        plt.plot(t, run["errors"][:, 1], label=label)
-    plt.xlabel("time [s]")
-    plt.ylabel("lateral error eta [m]")
-    plt.grid(True, alpha=0.25)
-    plt.legend(loc="best")
-    savefig(path)
+        ax.plot(t, run["errors"][:, 1], label=label)
+    ax.set_xlabel("time [s]")
+    ax.set_ylabel("lateral error eta [m]")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best")
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax
 
 
-def plot_delta(path: Path, t: np.ndarray, runs: dict[str, dict[str, np.ndarray]]) -> None:
-    plt.figure(figsize=(8.0, 4.4))
+def plot_delta(
+    path: Path,
+    t: np.ndarray,
+    runs: dict[str, dict[str, np.ndarray]],
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
+    fig, ax = plt.subplots(figsize=(8.0, 4.4))
     for label, run in runs.items():
-        plt.step(t[:-1], run["delta"], where="post", label=label)
-    plt.xlabel("time [s]")
-    plt.ylabel("Delta omega [rad/s]")
-    plt.grid(True, alpha=0.25)
-    plt.legend(loc="best")
-    savefig(path)
+        ax.step(t[:-1], run["delta"], where="post", label=label)
+    ax.set_xlabel("time [s]")
+    ax.set_ylabel("Delta omega [rad/s]")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best")
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax
 
 
-def plot_input_rate(path: Path, t: np.ndarray, runs: dict[str, dict[str, np.ndarray]]) -> None:
-    plt.figure(figsize=(8.0, 4.4))
+def plot_input_rate(
+    path: Path,
+    t: np.ndarray,
+    runs: dict[str, dict[str, np.ndarray]],
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
+    fig, ax = plt.subplots(figsize=(8.0, 4.4))
     for label, run in runs.items():
-        plt.step(t[:-1], run["delta_rate"], where="post", label=label)
-    plt.xlabel("time [s]")
-    plt.ylabel("Delta omega rate [rad/s/sample]")
-    plt.grid(True, alpha=0.25)
-    plt.legend(loc="best")
-    savefig(path)
+        ax.step(t[:-1], run["delta_rate"], where="post", label=label)
+    ax.set_xlabel("time [s]")
+    ax.set_ylabel("Delta omega rate [rad/s/sample]")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best")
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax
 
 
-def plot_margin(path: Path, t: np.ndarray, runs: dict[str, dict[str, np.ndarray]]) -> None:
-    plt.figure(figsize=(8.0, 4.4))
+def plot_margin(
+    path: Path,
+    t: np.ndarray,
+    runs: dict[str, dict[str, np.ndarray]],
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
+    fig, ax = plt.subplots(figsize=(8.0, 4.4))
     for label, run in runs.items():
-        plt.plot(t, run["margin"], label=label)
-    plt.axhline(0.0, color="k", linewidth=0.9)
-    plt.xlabel("time [s]")
-    plt.ylabel("minimum corridor margin [m]")
-    plt.grid(True, alpha=0.25)
-    plt.legend(loc="best")
-    savefig(path)
+        ax.plot(t, run["margin"], label=label)
+    ax.axhline(0.0, color="k", linewidth=0.9)
+    ax.set_xlabel("time [s]")
+    ax.set_ylabel("minimum corridor margin [m]")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best")
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax
 
 
-def plot_horizon_comparison(path: Path, t: np.ndarray, horizon_runs: dict[int, dict[str, np.ndarray]]) -> None:
-    plt.figure(figsize=(8.0, 4.4))
+def plot_horizon_comparison(
+    path: Path,
+    t: np.ndarray,
+    horizon_runs: dict[int, dict[str, np.ndarray]],
+    *,
+    show: bool = True,
+    close: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
+    fig, ax = plt.subplots(figsize=(8.0, 4.4))
     for horizon, run in horizon_runs.items():
-        plt.plot(t, run["errors"][:, 1], label=f"N = {horizon}")
-    plt.xlabel("time [s]")
-    plt.ylabel("lateral error eta [m]")
-    plt.grid(True, alpha=0.25)
-    plt.legend(loc="best")
-    savefig(path)
+        ax.plot(t, run["errors"][:, 1], label=f"N = {horizon}")
+    ax.set_xlabel("time [s]")
+    ax.set_ylabel("lateral error eta [m]")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best")
+    savefig(path, fig)
+    if show:
+        plt.show()
+    if close:
+        plt.close(fig)
+    return fig, ax
 
 
-def run_project2(steps: int, output_dir: str | Path) -> dict[str, object]:
+def run_project2(steps: int, output_dir: str | Path, *, show: bool = True, close: bool = False) -> dict[str, object]:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     figures_dir = output_dir / "figures"
@@ -225,12 +279,20 @@ def run_project2(steps: int, output_dir: str | Path) -> dict[str, object]:
         radius=radius,
         inner_radius=radius - 0.55,
         outer_radius=radius + 0.55,
+        show=show,
+        close=close,
     )
-    plot_lateral_error(figures_dir / "lateral_error_corridor.png", t, runs)
-    plot_delta(figures_dir / "yaw_rate_correction.png", t, runs)
-    plot_input_rate(figures_dir / "input_rate.png", t, {"saturated LQR": saturated, "MPC": mpc, "soft MPC": soft})
-    plot_margin(figures_dir / "minimum_margin.png", t, runs)
-    plot_horizon_comparison(figures_dir / "horizon_comparison.png", t, horizon_runs)
+    plot_lateral_error(figures_dir / "lateral_error_corridor.png", t, runs, show=show, close=close)
+    plot_delta(figures_dir / "yaw_rate_correction.png", t, runs, show=show, close=close)
+    plot_input_rate(
+        figures_dir / "input_rate.png",
+        t,
+        {"saturated LQR": saturated, "MPC": mpc, "soft MPC": soft},
+        show=show,
+        close=close,
+    )
+    plot_margin(figures_dir / "minimum_margin.png", t, runs, show=show, close=close)
+    plot_horizon_comparison(figures_dir / "horizon_comparison.png", t, horizon_runs, show=show, close=close)
 
     A, B = tracking_error_matrices(0.1, 0.8, 0.2)
     Q = np.diag([1.0, 25.0, 4.0])
@@ -307,7 +369,7 @@ def main() -> None:
     parser.add_argument("--steps", type=int, default=120)
     parser.add_argument("--output-dir", default="outputs/ch4_project2")
     args = parser.parse_args()
-    run_project2(args.steps, args.output_dir)
+    run_project2(args.steps, args.output_dir, show=False, close=True)
 
 
 if __name__ == "__main__":
