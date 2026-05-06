@@ -2,15 +2,26 @@
   "name": "THI MPC Course",
   "build": {
     "dockerfile": "Dockerfile",
-    "context": "."
+    "context": ".."
   },
   "workspaceFolder": "/workspace",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
   "forwardPorts": [8888],
+  "portsAttributes": {
+    "8888": {
+      "label": "JupyterLab",
+      "onAutoForward": "notify"
+    }
+  },
+  "postStartCommand": "bash .devcontainer/start.sh",
   "customizations": {
     "vscode": {
       "settings": {
-        "dev.containers.mountWaylandSocket": false
+        "dev.containers.mountWaylandSocket": false,
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.analysis.extraPaths": [
+          "/workspace"
+        ],
+        "jupyter.notebookFileRoot": "${workspaceFolder}"
       },
       "extensions": [
         "ms-python.python",

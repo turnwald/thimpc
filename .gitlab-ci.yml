@@ -1,0 +1,24 @@
+image: python:3.11-slim-bookworm
+
+stages:
+  - test
+
+variables:
+  PYTHONPATH: "$CI_PROJECT_DIR"
+  MPLBACKEND: "Agg"
+  PIP_NO_CACHE_DIR: "1"
+
+before_script:
+  - apt-get update
+  - apt-get install -y --no-install-recommends build-essential cmake gfortran liblapack-dev libblas-dev pkg-config git
+  - rm -rf /var/lib/apt/lists/*
+  - python -m pip install --upgrade pip
+  - python -m pip install -r requirements.txt
+
+study_smoke:
+  stage: test
+  script:
+    - python -m compileall controllers mpc systems scenarios tools tests
+    - if find studies -name 'walkthrough_solution.ipynb' | grep -q .; then python tools/create_student_material.py; git diff --exit-code studies; fi
+    - python -m pytest -q
+    - if [ "${CI_COMMIT_BRANCH:-}" = "main" ]; then THIMPC_RELEASE_MODE=public python -m pytest -q; python tools/check_student_release.py; fi
