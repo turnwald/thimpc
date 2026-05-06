@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scalar LQR Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --color-bg: #f7f6f2;
+  --color-surface: #f9f8f5;
+  --color-surface-2: #ffffff;
+  --color-border: #d4d1ca;
+  --color-divider: #dcd9d5;
+  --color-text: #28251d;
+  --color-text-muted: #7a7974;
+  --color-text-faint: #bab9b4;
+  --color-primary: #01696f;
+  --color-primary-hover: #0c4e54;
+  --color-primary-highlight: #cedcd8;
+  --color-gold: #d19900;
+  --color-gold-highlight: #e9e0c6;
+  --color-success: #437a22;
+  --color-success-highlight: #d4dfcc;
+  --color-error: #a12c7b;
+
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+  --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+  --space-4: 1rem;    --space-5: 1.25rem; --space-6: 1.5rem;
+  --space-8: 2rem;    --space-10: 2.5rem; --space-12: 3rem;
+
+  --radius-sm: 0.375rem; --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;  --radius-xl: 1rem;
+
+  --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+  --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.09);
+  --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] {
+  --color-bg: #171614;
+  --color-surface: #1c1b19;
+  --color-surface-2: #201f1d;
+  --color-border: #393836;
+  --color-divider: #262523;
+  --color-text: #cdccca;
+  --color-text-muted: #797876;
+  --color-text-faint: #5a5957;
+  --color-primary: #4f98a3;
+  --color-primary-hover: #227f8b;
+  --color-primary-highlight: #313b3b;
+  --color-gold: #e8af34;
+  --color-gold-highlight: #4d4332;
+  --color-success: #6daa45;
+  --color-success-highlight: #3a4435;
+  --color-error: #d163a7;
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.25);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.35);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+  min-height: 100dvh;
+  line-height: 1.6;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* ── Layout ── */
+.app-header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-divider);
+  padding: var(--space-3) var(--space-6);
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: center; gap: var(--space-3); }
+.logo {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: var(--color-primary);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+.app-title { font-size: var(--text-sm); font-weight: 600; }
+.app-subtitle { font-size: var(--text-xs); color: var(--color-text-muted); }
+.header-actions { display: flex; align-items: center; gap: var(--space-2); }
+
+.main { padding: var(--space-6); max-width: 1200px; margin: 0 auto; }
+
+.chapter-tag {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-size: var(--text-xs); color: var(--color-text-muted);
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-full);
+  margin-bottom: var(--space-4);
+}
+
+.system-banner {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-6);
+  display: flex; flex-wrap: wrap; gap: var(--space-6);
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+.system-eq {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+.system-eq span { color: var(--color-primary); font-weight: 500; }
+.system-params {
+  display: flex; gap: var(--space-4); flex-wrap: wrap;
+}
+.param-badge {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--color-primary-highlight);
+  color: var(--color-primary);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+[data-theme="dark"] .param-badge { color: var(--color-primary); }
+
+/* ── Grid ── */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+@media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* ── Control panel ── */
+.panel {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+.panel-title {
+  font-size: var(--text-sm); font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: var(--space-5);
+}
+
+/* ── Slider ── */
+.slider-section { margin-bottom: var(--space-6); }
+.slider-label {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: var(--space-3);
+}
+.slider-label-text { font-size: var(--text-sm); color: var(--color-text-muted); }
+.slider-value {
+  font-family: var(--font-mono); font-size: var(--text-xl); font-weight: 500;
+  color: var(--color-text); line-height: 1;
+}
+.slider-value.near-optimal { color: var(--color-success); }
+
+.slider-track-wrap { position: relative; padding: var(--space-2) 0; }
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%; height: 6px;
+  background: var(--color-divider);
+  border-radius: var(--radius-full);
+  outline: none; cursor: pointer;
+  transition: background var(--transition);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px; height: 22px;
+  background: var(--color-primary);
+  border: 2px solid var(--color-surface-2);
+  border-radius: 50%;
+  cursor: grab;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition), background var(--transition);
+}
+input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.15); }
+input[type="range"]:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; border-radius: var(--radius-full); }
+
+.slider-ticks {
+  display: flex; justify-content: space-between;
+  margin-top: var(--space-2);
+}
+.slider-tick { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-faint); }
+.slider-tick.optimal { color: var(--color-gold); font-weight: 600; }
+
+/* ── Cost display ── */
+.cost-display {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  text-align: center;
+}
+.cost-label { font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: var(--space-2); }
+.cost-value {
+  font-family: var(--font-mono); font-size: var(--text-xl); font-weight: 500;
+  color: var(--color-text); transition: color var(--transition);
+}
+.cost-value.good { color: var(--color-success); }
+.cost-value.bad { color: var(--color-error); }
+
+/* ── Stability badge ── */
+.stability-badge {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs); font-weight: 500;
+  transition: all var(--transition);
+  margin-bottom: var(--space-4);
+}
+.stability-badge.stable { background: var(--color-success-highlight); color: var(--color-success); }
+.stability-badge.unstable { background: color-mix(in oklch, var(--color-error) 10%, var(--color-bg)); color: var(--color-error); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* ── Best tracker ── */
+.best-tracker {
+  background: var(--color-gold-highlight);
+  border: 1px solid color-mix(in oklch, var(--color-gold) 30%, var(--color-border));
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.best-tracker-row { display: flex; justify-content: space-between; align-items: center; }
+.best-label { font-size: var(--text-xs); color: var(--color-text-muted); }
+.best-val { font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 600; color: var(--color-gold); }
+
+/* ── Reveal button ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-md);
+  font-size: var(--text-sm); font-weight: 500; cursor: pointer; border: none;
+  transition: all var(--transition); width: 100%;
+}
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-hover); }
+.btn-ghost {
+  background: transparent; color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+.btn-ghost:hover { background: var(--color-surface); color: var(--color-text); }
+
+.btn-theme {
+  background: transparent; border: 1px solid var(--color-border);
+  color: var(--color-text-muted); padding: var(--space-2);
+  border-radius: var(--radius-md); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.btn-theme:hover { background: var(--color-surface); color: var(--color-text); }
+
+/* ── Reveal panel ── */
+.reveal-panel {
+  display: none;
+  margin-top: var(--space-4);
+  background: var(--color-success-highlight);
+  border: 1px solid color-mix(in oklch, var(--color-success) 25%, var(--color-border));
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+.reveal-panel.show { display: block; }
+.reveal-title { font-size: var(--text-xs); font-weight: 600; color: var(--color-success); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: var(--space-3); }
+.reveal-formula { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text); line-height: 2; }
+.reveal-formula .hl { color: var(--color-success); font-weight: 600; }
+
+/* ── Charts ── */
+.charts-col { display: flex; flex-direction: column; gap: var(--space-5); }
+.chart-panel { position: relative; }
+.chart-title-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+.chart-title { font-size: var(--text-sm); font-weight: 600; color: var(--color-text); }
+.chart-desc { font-size: var(--text-xs); color: var(--color-text-muted); }
+canvas { display: block; border-radius: var(--radius-md); }
+
+/* ── Optimal marker ── */
+.optimal-hint {
+  display: none;
+  background: var(--color-gold-highlight);
+  border: 1px solid color-mix(in oklch, var(--color-gold) 40%, var(--color-border));
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs); color: var(--color-gold);
+  text-align: center; font-weight: 500;
+  margin-top: var(--space-3);
+}
+.optimal-hint.show { display: block; }
+
+/* ── Footer ── */
+footer {
+  margin-top: var(--space-12);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-divider);
+  text-align: center;
+  font-size: var(--text-xs); color: var(--color-text-faint);
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <div class="logo">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-label="LQR Explorer">
+        <path d="M3 15 Q7 4 10 10 Q13 16 17 5" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <circle cx="10" cy="10" r="2" fill="white" opacity="0.5"/>
+      </svg>
+    </div>
+    <div>
+      <div class="app-title">Scalar LQR Explorer</div>
+      <div class="app-subtitle">Trial &amp; error → optimal gain</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-theme" data-theme-toggle aria-label="Toggle dark mode">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="main">
+  <div class="chapter-tag">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="1" width="4" height="4" rx="0.5"/><rect x="7" y="1" width="4" height="4" rx="0.5"/><rect x="1" y="7" width="4" height="4" rx="0.5"/><rect x="7" y="7" width="4" height="4" rx="0.5"/></svg>
+    Chapter 2.1 — Motivation
+  </div>
+
+  <div class="system-banner">
+    <div>
+      <div class="system-eq">x<sub>k+1</sub> = <span>x<sub>k</sub> + u<sub>k</sub></span>,&nbsp;&nbsp; u<sub>k</sub> = −K x<sub>k</sub></div>
+      <div class="system-eq" style="margin-top:4px">J(K) = Σ (x<sub>k</sub>² + u<sub>k</sub>²),&nbsp;&nbsp; x<sub>0</sub> = 1</div>
+    </div>
+    <div class="system-params">
+      <span class="param-badge">A = 1</span>
+      <span class="param-badge">B = 1</span>
+      <span class="param-badge">q = 1</span>
+      <span class="param-badge">r = 1</span>
+      <span class="param-badge">x₀ = 1</span>
+    </div>
+    <div style="font-size:var(--text-xs); color:var(--color-text-muted); max-width:240px">
+      Move the slider to try different gains. Which K gives the lowest total cost?
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Left: Controls -->
+    <div>
+      <div class="panel">
+        <div class="panel-title">Control</div>
+
+        <div class="slider-section">
+          <div class="slider-label">
+            <span class="slider-label-text">Gain K</span>
+            <span class="slider-value" id="kDisplay">0.50</span>
+          </div>
+          <div class="slider-track-wrap">
+            <input type="range" id="kSlider" min="0.01" max="1.99" step="0.01" value="0.50" aria-label="Feedback gain K">
+          </div>
+          <div class="slider-ticks">
+            <span class="slider-tick">0</span>
+            <span class="slider-tick">0.5</span>
+            <span class="slider-tick optimal">K*≈0.618</span>
+            <span class="slider-tick">1.5</span>
+            <span class="slider-tick">2</span>
+          </div>
+        </div>
+
+        <div class="stability-badge stable" id="stabilityBadge">
+          <span class="dot"></span>
+          <span id="stabilityText">Stable — |1−K| = 0.50</span>
+        </div>
+
+        <div class="cost-display">
+          <div class="cost-label">Total Cost J(K)</div>
+          <div class="cost-value" id="costDisplay">—</div>
+        </div>
+
+        <div class="best-tracker" id="bestTracker">
+          <div class="best-tracker-row">
+            <span class="best-label">🏆 Best K found</span>
+            <span class="best-val" id="bestK">—</span>
+          </div>
+          <div class="best-tracker-row" style="margin-top:4px">
+            <span class="best-label">Best cost</span>
+            <span class="best-val" id="bestCost">—</span>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:var(--space-2); margin-bottom:var(--space-3)">
+          <button class="btn btn-primary" id="revealBtn">Reveal optimal K*</button>
+          <button class="btn btn-ghost" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="reveal-panel" id="revealPanel">
+          <div class="reveal-title">✓ Optimal solution</div>
+          <div class="reveal-formula">
+            K* = (√5 − 1)/2 <span class="hl">≈ 0.6180</span><br>
+            p* = (√5 + 1)/2 <span class="hl">≈ 1.6180</span><br>
+            J*(x₀=1) = p* <span class="hl">≈ 1.6180</span><br>
+            <span style="color:var(--color-text-muted)">— the golden ratio</span>
+          </div>
+        </div>
+
+        <div class="optimal-hint" id="optimalHint">
+          🎯 Very close to optimal! K ≈ 0.618
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Charts -->
+    <div class="charts-col">
+      <div class="panel chart-panel">
+        <div class="chart-title-row">
+          <div>
+            <div class="chart-title">Cost landscape J(K)</div>
+            <div class="chart-desc">Total infinite-horizon cost as a function of gain K</div>
+          </div>
+        </div>
+        <canvas id="costChart" height="200"></canvas>
+      </div>
+
+      <div class="panel chart-panel">
+        <div class="chart-title-row">
+          <div>
+            <div class="chart-title">Closed-loop trajectory</div>
+            <div class="chart-desc">State x<sub>k</sub> and input u<sub>k</sub> over time (first 30 steps)</div>
+          </div>
+        </div>
+        <canvas id="trajChart" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  MPC Course · Chapter 2 · Scalar integrator x<sub>k+1</sub> = x<sub>k</sub> + u<sub>k</sub>
+</footer>
+
+<script>
+// ── Theme toggle ──
+(function(){
+  const btn = document.querySelector('[data-theme-toggle]');
+  const root = document.documentElement;
+  let dark = matchMedia('(prefers-color-scheme:dark)').matches;
+  root.setAttribute('data-theme', dark ? 'dark' : 'light');
+  const moon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  const sun = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+  btn.innerHTML = dark ? sun : moon;
+  btn.addEventListener('click', () => {
+    dark = !dark;
+    root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    btn.innerHTML = dark ? sun : moon;
+    updateChartTheme();
+  });
+})();
+
+// ── Math ──
+const q = 1, r = 1, x0 = 1;
+
+function exactCost(K) {
+  if (K <= 0 || K >= 2) return Infinity;
+  return (q + r * K * K) * x0 * x0 / (K * (2 - K));
+}
+
+function trajectory(K, N = 30) {
+  const xs = [x0], us = [];
+  for (let k = 0; k < N; k++) {
+    const u = -K * xs[k];
+    us.push(u);
+    xs.push(xs[k] + u);
+  }
+  us.push(-K * xs[N]);
+  return { xs, us };
+}
+
+// ── Cost landscape data ──
+const Ks = [];
+const Js = [];
+for (let K = 0.02; K < 1.99; K += 0.01) {
+  Ks.push(+K.toFixed(2));
+  Js.push(+exactCost(K).toFixed(4));
+}
+const KSTAR = (Math.sqrt(5) - 1) / 2;
+const JSTAR = (1 + Math.sqrt(5)) / 2;
+
+// ── Chart helpers ──
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function getColors() {
+  return {
+    text: cssVar('--color-text'),
+    muted: cssVar('--color-text-muted'),
+    faint: cssVar('--color-text-faint'),
+    divider: cssVar('--color-divider'),
+    primary: cssVar('--color-primary'),
+    gold: cssVar('--color-gold'),
+    success: cssVar('--color-success'),
+    error: cssVar('--color-error'),
+    bg: cssVar('--color-surface-2'),
+  };
+}
+
+Chart.defaults.animation.duration = 120;
+
+// ── Cost landscape chart ──
+let currentK = 0.50;
+let bestK = null, bestCost = Infinity;
+
+const costCtx = document.getElementById('costChart').getContext('2d');
+const c = getColors();
+
+const costChart = new Chart(costCtx, {
+  type: 'line',
+  data: {
+    labels: Ks,
+    datasets: [
+      {
+        label: 'J(K)',
+        data: Js,
+        borderColor: c.primary,
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: true,
+        backgroundColor: (ctx) => {
+          const grad = ctx.chart.ctx.createLinearGradient(0, 0, 0, 200);
+          grad.addColorStop(0, c.primary + '33');
+          grad.addColorStop(1, c.primary + '05');
+          return grad;
+        },
+        tension: 0.3,
+      },
+      {
+        label: 'Current K',
+        data: [],
+        type: 'scatter',
+        pointRadius: 9,
+        pointBackgroundColor: c.text,
+        pointBorderColor: c.bg,
+        pointBorderWidth: 2,
+        showLine: false,
+      },
+      {
+        label: 'K* (optimal)',
+        data: [{ x: KSTAR, y: JSTAR }],
+        type: 'scatter',
+        pointRadius: 8,
+        pointStyle: 'star',
+        pointBackgroundColor: c.gold,
+        pointBorderColor: c.gold,
+        showLine: false,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: {
+        type: 'linear',
+        min: 0, max: 2,
+        title: { display: true, text: 'K', color: c.muted, font: { family: 'JetBrains Mono', size: 12 } },
+        ticks: { color: c.muted, maxTicksLimit: 5, font: { family: 'JetBrains Mono', size: 11 } },
+        grid: { color: c.divider + '88' }
+      },
+      y: {
+        min: 1, max: 8,
+        title: { display: true, text: 'J(K)', color: c.muted, font: { family: 'JetBrains Mono', size: 12 } },
+        ticks: { color: c.muted, maxTicksLimit: 5, font: { family: 'JetBrains Mono', size: 11 } },
+        grid: { color: c.divider + '88' }
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => ` J = ${ctx.parsed.y.toFixed(4)}`
+        },
+        bodyFont: { family: 'JetBrains Mono', size: 12 }
+      }
+    }
+  }
+});
+
+// ── Trajectory chart ──
+const trajCtx = document.getElementById('trajChart').getContext('2d');
+const steps = Array.from({ length: 31 }, (_, i) => i);
+
+const trajChart = new Chart(trajCtx, {
+  type: 'line',
+  data: {
+    labels: steps,
+    datasets: [
+      {
+        label: 'xₖ',
+        data: [],
+        borderColor: c.primary,
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointBackgroundColor: c.primary,
+        tension: 0.1,
+        yAxisID: 'y',
+      },
+      {
+        label: 'uₖ',
+        data: [],
+        borderColor: c.error,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: c.error,
+        borderDash: [5, 3],
+        tension: 0.1,
+        yAxisID: 'y',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: {
+        title: { display: true, text: 'step k', color: c.muted, font: { family: 'JetBrains Mono', size: 12 } },
+        ticks: { color: c.muted, maxTicksLimit: 8, font: { family: 'JetBrains Mono', size: 11 } },
+        grid: { color: c.divider + '88' }
+      },
+      y: {
+        title: { display: true, text: 'value', color: c.muted, font: { family: 'JetBrains Mono', size: 12 } },
+        ticks: { color: c.muted, maxTicksLimit: 5, font: { family: 'JetBrains Mono', size: 11 } },
+        grid: { color: c.divider + '88' }
+      }
+    },
+    plugins: {
+      legend: {
+        display: true,
+        labels: { color: c.muted, font: { family: 'JetBrains Mono', size: 11 }, boxWidth: 18 }
+      },
+      tooltip: { bodyFont: { family: 'JetBrains Mono', size: 12 } }
+    }
+  }
+});
+
+// ── Update all ──
+function update(K) {
+  currentK = K;
+  const J = exactCost(K);
+  const stable = K > 0 && K < 2;
+
+  // Slider display
+  const kDisp = document.getElementById('kDisplay');
+  kDisp.textContent = K.toFixed(2);
+  const nearOpt = Math.abs(K - KSTAR) < 0.02;
+  kDisp.className = 'slider-value' + (nearOpt ? ' near-optimal' : '');
+
+  // Stability badge
+  const badge = document.getElementById('stabilityBadge');
+  const cl = K > 0 && K < 2 ? 'stable' : 'unstable';
+  badge.className = `stability-badge ${cl}`;
+  document.getElementById('stabilityText').textContent =
+    stable
+      ? `Stable — |1−K| = ${Math.abs(1 - K).toFixed(2)}`
+      : 'Unstable — |1−K| ≥ 1';
+
+  // Cost display
+  const costDisp = document.getElementById('costDisplay');
+  if (!stable) {
+    costDisp.textContent = '∞ (unstable)';
+    costDisp.className = 'cost-value bad';
+  } else {
+    costDisp.textContent = J.toFixed(4);
+    const ratio = J / JSTAR;
+    costDisp.className = 'cost-value' + (ratio < 1.05 ? ' good' : ratio > 3 ? ' bad' : '');
+  }
+
+  // Best tracker
+  if (stable && J < bestCost) {
+    bestCost = J;
+    bestK = K;
+    document.getElementById('bestK').textContent = K.toFixed(2);
+    document.getElementById('bestCost').textContent = J.toFixed(4);
+  }
+
+  // Optimal hint
+  const hint = document.getElementById('optimalHint');
+  hint.className = 'optimal-hint' + (nearOpt ? ' show' : '');
+
+  // Update cost chart current point
+  costChart.data.datasets[1].data = stable ? [{ x: K, y: J }] : [];
+  costChart.update('none');
+
+  // Update trajectory chart
+  const { xs, us } = trajectory(K, 30);
+  trajChart.data.datasets[0].data = xs.slice(0, 31);
+  trajChart.data.datasets[1].data = us.slice(0, 31);
+  trajChart.update('none');
+}
+
+// ── Slider event ──
+const slider = document.getElementById('kSlider');
+slider.addEventListener('input', () => update(parseFloat(slider.value)));
+
+// ── Reveal button ──
+document.getElementById('revealBtn').addEventListener('click', () => {
+  const panel = document.getElementById('revealPanel');
+  panel.classList.toggle('show');
+  slider.value = KSTAR.toFixed(2);
+  update(KSTAR);
+});
+
+// ── Reset button ──
+document.getElementById('resetBtn').addEventListener('click', () => {
+  bestCost = Infinity; bestK = null;
+  document.getElementById('bestK').textContent = '—';
+  document.getElementById('bestCost').textContent = '—';
+  document.getElementById('revealPanel').classList.remove('show');
+  slider.value = 0.50;
+  update(0.50);
+});
+
+// ── Theme update for charts ──
+function updateChartTheme() {
+  const col = getColors();
+  [costChart, trajChart].forEach(ch => {
+    ch.options.scales.x.ticks.color = col.muted;
+    ch.options.scales.y.ticks.color = col.muted;
+    ch.options.scales.x.grid.color = col.divider + '88';
+    ch.options.scales.y.grid.color = col.divider + '88';
+    ch.options.scales.x.title.color = col.muted;
+    ch.options.scales.y.title.color = col.muted;
+  });
+  trajChart.options.plugins.legend.labels.color = col.muted;
+  costChart.data.datasets[0].borderColor = col.primary;
+  costChart.data.datasets[2].pointBackgroundColor = col.gold;
+  costChart.data.datasets[2].pointBorderColor = col.gold;
+  trajChart.data.datasets[0].borderColor = col.primary;
+  trajChart.data.datasets[0].pointBackgroundColor = col.primary;
+  trajChart.data.datasets[1].borderColor = col.error;
+  trajChart.data.datasets[1].pointBackgroundColor = col.error;
+  costChart.update(); trajChart.update();
+}
+
+// ── Init ──
+update(0.50);
+</script>
+</body>
+</html>
