@@ -60,3 +60,4 @@ def simulate_lqr(
         U[k] = u
         X[k + 1] = A @ X[k] + B @ u
     return X, U
+

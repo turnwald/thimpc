@@ -7,14 +7,21 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mpc.terminal_tools import ellipse_points
-
 
 def savefig(path: str | Path, fig: plt.Figure) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
     fig.savefig(path, dpi=160)
+
+
+def _ellipse_points(P: np.ndarray, level: float, num: int = 200) -> np.ndarray:
+    """Return phase-plane points satisfying x.T P x = level."""
+    P = np.asarray(P, dtype=float)
+    angles = np.linspace(0.0, 2.0 * np.pi, num)
+    circle = np.vstack([np.cos(angles), np.sin(angles)])
+    transform = np.linalg.cholesky(np.linalg.inv(P) * float(level))
+    return (transform @ circle).T
 
 
 def plot_time_histories(
@@ -93,7 +100,7 @@ def plot_terminal_geometry(
 ) -> tuple[plt.Figure, plt.Axes]:
     fig, ax = plt.subplots(figsize=(6.4, 5.2))
     for level in [0.5, 1.5, 3.0, 6.0]:
-        pts = ellipse_points(P, level)
+        pts = _ellipse_points(P, level)
         ax.plot(pts[:, 0], pts[:, 1], label=f"x^T P x = {level:g}")
     ax.axvline(x_min[0], color="k", linestyle="--", linewidth=0.9)
     ax.axvline(x_max[0], color="k", linestyle="--", linewidth=0.9)

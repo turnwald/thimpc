@@ -9,6 +9,25 @@ import numpy as np
 
 from projects.project_2_mobile_robot_corridor import config
 
+CORRIDOR_HALF_WIDTH = getattr(config, "CORRIDOR_HALF_WIDTH", 0.55)
+NARROW_HALF_WIDTH = getattr(config, "NARROW_HALF_WIDTH", 0.22)
+NARROW_OFFSET = getattr(config, "NARROW_OFFSET", 0.32)
+
+
+def _wrapped_angle(angle: np.ndarray) -> np.ndarray:
+    return (np.asarray(angle) + np.pi) % (2.0 * np.pi) - np.pi
+
+
+def _corridor_error_bounds(theta: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    wrapped = _wrapped_angle(theta - config.NARROW_CENTER)
+    half_angle = config.NARROW_WIDTH / 2.0
+    inside = np.abs(wrapped) <= half_angle
+    blend = np.zeros_like(theta, dtype=float)
+    blend[inside] = 0.5 * (1.0 + np.cos(np.pi * wrapped[inside] / half_angle))
+    half_width = CORRIDOR_HALF_WIDTH - blend * (CORRIDOR_HALF_WIDTH - NARROW_HALF_WIDTH)
+    center = blend * NARROW_OFFSET
+    return center - half_width, center + half_width
+
 
 def savefig(path: str | Path, fig: plt.Figure) -> None:
     path = Path(path)
@@ -27,17 +46,42 @@ def plot_top_view(
     close: bool = False,
 ) -> tuple[plt.Figure, plt.Axes]:
     fig, ax = plt.subplots(figsize=(7.0, 7.0))
-    theta = np.linspace(0.0, 2.0 * np.pi, 300)
+    theta = np.linspace(0.0, 2.0 * np.pi, 420)
+    eta_min, eta_max = _corridor_error_bounds(theta)
     ax.plot(reference_xy[:, 0], reference_xy[:, 1], "k--", linewidth=1.2, label="reference")
-    ax.plot((radius - 0.55) * np.cos(theta), (radius - 0.55) * np.sin(theta), color="tab:red", linewidth=1.2, label="obstacle boundary")
-    ax.plot((radius + 0.55) * np.cos(theta), (radius + 0.55) * np.sin(theta), color="tab:gray", linewidth=1.2, label="wall boundary")
+    ax.plot(
+        (radius - eta_max) * np.cos(theta),
+        (radius - eta_max) * np.sin(theta),
+        color="tab:red",
+        linewidth=2.4,
+        label="obstacle boundary",
+    )
+    ax.plot(
+        (radius - eta_min) * np.cos(theta),
+        (radius - eta_min) * np.sin(theta),
+        color="tab:gray",
+        linewidth=2.4,
+        label="wall boundary",
+    )
     narrow_theta = np.linspace(
         config.NARROW_CENTER - 0.5 * config.NARROW_WIDTH,
         config.NARROW_CENTER + 0.5 * config.NARROW_WIDTH,
         100,
     )
-    ax.plot((radius - 0.22) * np.cos(narrow_theta), (radius - 0.22) * np.sin(narrow_theta), color="tab:orange", linewidth=2.2, label="narrowed corridor")
-    ax.plot((radius + 0.22) * np.cos(narrow_theta), (radius + 0.22) * np.sin(narrow_theta), color="tab:orange", linewidth=2.2)
+    narrow_eta_min, narrow_eta_max = _corridor_error_bounds(narrow_theta)
+    ax.plot(
+        (radius - narrow_eta_min) * np.cos(narrow_theta),
+        (radius - narrow_eta_min) * np.sin(narrow_theta),
+        color="tab:orange",
+        linewidth=3.0,
+        label="critical narrowed region",
+    )
+    ax.plot(
+        (radius - narrow_eta_max) * np.cos(narrow_theta),
+        (radius - narrow_eta_max) * np.sin(narrow_theta),
+        color="tab:orange",
+        linewidth=3.0,
+    )
     for label, run in runs.items():
         states = run["states"]
         ax.plot(states[:, 0], states[:, 1], linewidth=1.6, label=label)

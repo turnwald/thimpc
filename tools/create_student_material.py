@@ -62,15 +62,12 @@ TODO_BLOCK = [
     "# The surrounding setup is provided so you can focus on the control idea.\n",
 ]
 
-START_MARKER = "SOLUTION_" + "START"
-END_MARKER = "SOLUTION_" + "END"
-
 FORBIDDEN_STUDENT_TEXT = [
-    START_MARKER,
-    END_MARKER,
-    "Instructor " + "solution",
-    "private " + "note",
-    "instructor-" + "only",
+    "SOLUTION_START",
+    "SOLUTION_END",
+    "Instructor solution",
+    "private note",
+    "instructor-only",
 ]
 
 
@@ -83,28 +80,28 @@ def _text_to_source(text: str) -> list[str]:
 
 
 def strip_solution_regions(source: list[str] | str) -> list[str]:
-    """Replace restricted code regions with TODO text."""
+    """Replace code between SOLUTION_START and SOLUTION_END with TODO text."""
     lines = _text_to_source(_source_to_text(source))
     stripped: list[str] = []
     inside_solution = False
 
     for line in lines:
-        if START_MARKER in line:
+        if "SOLUTION_START" in line:
             if inside_solution:
-                raise ValueError("Nested restricted start marker")
+                raise ValueError("Nested SOLUTION_START marker")
             inside_solution = True
             stripped.extend(TODO_BLOCK)
             continue
-        if END_MARKER in line:
+        if "SOLUTION_END" in line:
             if not inside_solution:
-                raise ValueError("restricted end marker without start marker")
+                raise ValueError("SOLUTION_END marker without SOLUTION_START")
             inside_solution = False
             continue
         if inside_solution:
             continue
         stripped.append(line)
     if inside_solution:
-        raise ValueError("restricted start marker without end marker")
+        raise ValueError("SOLUTION_START marker without SOLUTION_END")
     return stripped
 
 
@@ -136,7 +133,7 @@ def convert_notebook(source_path: Path, target_path: Path) -> None:
 
 
 def validate_student_notebook(nb: dict, target_path: Path) -> None:
-    """Fail fast if restricted content survived stripping."""
+    """Fail fast if instructor-only content survived stripping."""
     text_parts: list[str] = []
     for cell in nb.get("cells", []):
         text_parts.append(_source_to_text(cell.get("source", "")))
@@ -150,7 +147,7 @@ def validate_student_notebook(nb: dict, target_path: Path) -> None:
     text = "\n".join(text_parts).lower()
     leaked = [marker for marker in FORBIDDEN_STUDENT_TEXT if marker.lower() in text]
     if leaked:
-        raise ValueError(f"{target_path}: restricted content leaked: {', '.join(leaked)}")
+        raise ValueError(f"{target_path}: instructor-only content leaked: {', '.join(leaked)}")
 
 
 def main() -> None:

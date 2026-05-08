@@ -18,3 +18,4 @@ def ellipse_points(P: np.ndarray, level: float, num: int = 200) -> np.ndarray:
     circle = np.vstack([np.cos(angles), np.sin(angles)])
     transform = np.linalg.cholesky(np.linalg.inv(P) * float(level))
     return (transform @ circle).T
+

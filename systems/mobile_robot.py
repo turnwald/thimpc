@@ -85,12 +85,21 @@ def corridor_bounds(
     narrow_half_width: float = 0.22,
     narrow_center: float = 0.5 * np.pi,
     narrow_width: float = 1.4,
+    narrow_offset: float = 0.32,
     margin: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return time-varying lateral bounds eta_min, eta_max for an annular corridor."""
+    """Return time-varying lateral bounds eta_min, eta_max for an annular corridor.
+
+    In the narrowed section, the admissible lateral-error interval is shifted by
+    ``narrow_offset``. A positive offset means the reference path ``eta = 0`` can
+    lie outside the allowed interval.
+    """
     angle = np.asarray(path_angle, dtype=float)
     wrapped = wrap_angle(angle - narrow_center)
+    inside_narrow = np.abs(wrapped) <= narrow_width / 2.0
     half = np.full_like(angle, half_width - margin, dtype=float)
-    half[np.abs(wrapped) <= narrow_width / 2.0] = narrow_half_width - margin
+    center = np.zeros_like(angle, dtype=float)
+    half[inside_narrow] = narrow_half_width - margin
+    center[inside_narrow] = narrow_offset
     half = np.maximum(half, 0.03)
-    return -half, half
+    return center - half, center + half

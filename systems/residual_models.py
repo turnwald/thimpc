@@ -48,3 +48,4 @@ def predict_residual(W: np.ndarray, error: np.ndarray, delta_omega: np.ndarray |
     if Phi.ndim == 1:
         return np.asarray(W, dtype=float) @ Phi
     return Phi @ np.asarray(W, dtype=float).T
+

@@ -1,13 +1,17 @@
 # Project 2 - Mobile Robot Corridor
 
 This project studies local tracking-error MPC for a mobile robot following a
-circular path through a corridor with a narrowed passage centered at 90 degrees
-around the circle.
+circular reference through a corridor with a smooth narrowed passage centered at
+90 degrees around the circle. In the critical passage, the admissible lateral
+error interval is shifted away from zero, so the desired reference path itself is
+not inside the allowed state set.
 
 Open `walkthrough.ipynb` from the repository root and run the cells in order.
-The main claim is visual: nominal tracking drifts into the corridor boundary,
-while MPC predicts the narrowed passage and keeps the relevant margin positive
-in the nominal scenario.
+The main claim is visual: a simple baseline tracker follows the reference into a
+constraint conflict, saturated LQR improves the local response but remains
+short-sighted, and MPC predicts the shifted narrow passage. The notebook also
+keeps a hard-MPC diagnostic to show why abrupt or already-violated state
+constraints can produce real solver infeasibility.
 
 The most useful outputs are:
 
@@ -15,6 +19,7 @@ The most useful outputs are:
 - lateral-error corridor plot;
 - yaw-rate correction plot with limits;
 - margin plot;
+- animated baseline / saturated LQR / MPC replay;
 - metrics comparing minimum margin, violation, input use, and tracking error.
 
 Good student modifications:

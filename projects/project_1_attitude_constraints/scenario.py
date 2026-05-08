@@ -25,7 +25,7 @@ def lqr_gain(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndarray) -> tupl
     return K, P
 
 
-def count_violations(values: np.ndarray, lower: np.ndarray, upper: np.ndarray, tol: float = 1e-9) -> int:
+def count_violations(values: np.ndarray, lower: np.ndarray, upper: np.ndarray, tol: float = 1e-7) -> int:
     values = np.asarray(values, dtype=float)
     lower = np.asarray(lower, dtype=float)
     upper = np.asarray(upper, dtype=float)

@@ -25,3 +25,4 @@ def simulate_linear(A: np.ndarray, B: np.ndarray, x0: np.ndarray, U: np.ndarray)
     for k, u in enumerate(U):
         X[k + 1] = A @ X[k] + B @ np.asarray(u, dtype=float).reshape(-1)
     return X
+

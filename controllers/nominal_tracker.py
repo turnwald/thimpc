@@ -18,3 +18,4 @@ def corrected_yaw_rate(omega_r: float, delta_omega: float, omega_min: float | No
         hi = np.inf if omega_max is None else omega_max
         omega = float(np.clip(omega, lo, hi))
     return omega
+

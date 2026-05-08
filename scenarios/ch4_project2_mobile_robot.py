@@ -256,8 +256,9 @@ def run_project2(steps: int, output_dir: str | Path, *, show: bool = True, close
 
     nominal = simulate_tracker("nominal", steps, horizon=15)
     saturated = simulate_tracker("saturated_lqr", steps, horizon=15)
-    mpc = simulate_tracker("mpc", steps, horizon=15)
-    soft = simulate_tracker("mpc", steps, horizon=15, soft_corridor=True)
+    hard_mpc = simulate_tracker("mpc", steps, horizon=15)
+    mpc = simulate_tracker("mpc", steps, horizon=15, soft_corridor=True)
+    soft = mpc
     mismatch = simulate_tracker("mpc", steps, horizon=15, soft_corridor=True, yaw_rate_bias=0.035)
     tightened = simulate_tracker("mpc", steps, horizon=15, margin=0.08, soft_corridor=True)
     horizon_runs = {N: simulate_tracker("mpc", steps, horizon=N, soft_corridor=True) for N in [5, 15, 30]}
@@ -268,7 +269,6 @@ def run_project2(steps: int, output_dir: str | Path, *, show: bool = True, close
         "nominal": nominal,
         "saturated LQR": saturated,
         "MPC": mpc,
-        "soft MPC": soft,
     }
 
     radius = float(mpc["radius"])
@@ -302,7 +302,7 @@ def run_project2(steps: int, output_dir: str | Path, *, show: bool = True, close
     hard = solve_linear_mpc(
         A,
         B,
-        np.array([0.0, 0.45, 0.0]),
+        np.array([0.0, 0.0, 0.0]),
         15,
         Q,
         R,
@@ -313,7 +313,7 @@ def run_project2(steps: int, output_dir: str | Path, *, show: bool = True, close
     soft_single = solve_linear_mpc(
         A,
         B,
-        np.array([0.0, 0.45, 0.0]),
+        np.array([0.0, 0.0, 0.0]),
         15,
         Q,
         R,
@@ -329,6 +329,7 @@ def run_project2(steps: int, output_dir: str | Path, *, show: bool = True, close
         "nominal": nominal,
         "saturated_lqr": saturated,
         "mpc": mpc,
+        "hard_mpc": hard_mpc,
         "soft_mpc": soft,
         "yaw_bias_soft_mpc": mismatch,
         "tightened_soft_mpc": tightened,

@@ -90,3 +90,4 @@ def plot_rmse(
     if close:
         plt.close(fig)
     return fig, ax
+

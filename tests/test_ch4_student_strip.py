@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.create_student_material import END_MARKER, FORBIDDEN_STUDENT_TEXT, START_MARKER, convert_notebook, strip_solution_regions, study_notebooks
+from tools.create_student_material import FORBIDDEN_STUDENT_TEXT, convert_notebook, strip_solution_regions, study_notebooks
 
 
 INSTRUCTOR_RELEASE_MODES = {"instructor", "solutions", "private"}
@@ -70,15 +70,15 @@ def test_student_generation_matches_committed_notebooks(tmp_path, source_name, t
 
 
 def test_strip_solution_regions_rejects_unclosed_marker():
-    with pytest.raises(ValueError, match="without end marker"):
-        strip_solution_regions(["keep\n", f"# {START_MARKER}\n", "secret\n"])
+    with pytest.raises(ValueError, match="without SOLUTION_END"):
+        strip_solution_regions(["keep\n", "# SOLUTION_START\n", "secret\n"])
 
 
 def test_strip_solution_regions_rejects_unmatched_end_marker():
-    with pytest.raises(ValueError, match="without start marker"):
-        strip_solution_regions([f"# {END_MARKER}\n"])
+    with pytest.raises(ValueError, match="without SOLUTION_START"):
+        strip_solution_regions(["# SOLUTION_END\n"])
 
 
 def test_strip_solution_regions_rejects_nested_marker():
     with pytest.raises(ValueError, match="Nested"):
-        strip_solution_regions([f"# {START_MARKER}\n", f"# {START_MARKER}\n", f"# {END_MARKER}\n"])
+        strip_solution_regions(["# SOLUTION_START\n", "# SOLUTION_START\n", "# SOLUTION_END\n"])

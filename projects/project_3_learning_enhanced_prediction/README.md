@@ -14,3 +14,4 @@ Good student modifications:
 - Change the random seed.
 - Compare nominal and learned prediction errors state by state.
 - Ask what would still need to be checked before using the learned model in MPC.
+

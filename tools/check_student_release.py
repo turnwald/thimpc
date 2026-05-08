@@ -52,7 +52,7 @@ def check_student_notebooks() -> None:
         text = "\n".join(parts).lower()
         leaked = [marker for marker in FORBIDDEN_STUDENT_TEXT if marker.lower() in text]
         if leaked:
-            fail(f"{path}: restricted content leaked: {', '.join(leaked)}")
+            fail(f"{path}: instructor-only content leaked: {', '.join(leaked)}")
 
 
 def main() -> None:

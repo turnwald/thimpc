@@ -14,3 +14,4 @@ Good student modifications:
 - Tighten or relax the torque and angle bounds.
 - Change the MPC horizon.
 - Compare hard constraints with soft angle constraints.
+
