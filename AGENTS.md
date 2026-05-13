@@ -42,8 +42,8 @@ This is a student-facing Master's course repository for Model Predictive Control
 
 ## Solution-First Workflow
 
-- Instructor solution notebooks live as `studies/study_*/walkthrough_solution.ipynb` only on `solutions` and `private`.
-- Student notebooks are generated/stripped into sibling `studies/study_*/walkthrough.ipynb` notebooks.
-- Use `python tools/create_student_material.py` to regenerate all student-facing study notebooks.
+- Instructor solution notebooks live as `plane_code/*_solution.ipynb` and `projects/project_*/walkthrough_solution.ipynb` only on `solutions` and `private`.
+- Student notebooks are generated/stripped into sibling `plane_code/*.ipynb` and `projects/project_*/walkthrough.ipynb` notebooks.
+- Use `python tools/create_student_material.py` to regenerate all student-facing notebooks.
 - Generated student notebooks must not contain instructor outputs.
 - Tests must verify no `SOLUTION_START`, `SOLUTION_END`, `Instructor solution`, private notes, or hidden solution outputs leak into student material.

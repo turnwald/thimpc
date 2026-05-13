@@ -6,10 +6,10 @@ from pathlib import Path
 
 import numpy as np
 
+from projects._shared.mobile_robot import tracking_error_matrices
 from projects.project_3_learning_enhanced_prediction import config
 from projects.project_3_learning_enhanced_prediction.plots import plot_prediction_eta, plot_residual_error, plot_rmse
-from systems.mobile_robot import tracking_error_matrices
-from systems.residual_models import fit_residual_least_squares, predict_residual
+from projects.project_3_learning_enhanced_prediction.residual_model import fit_residual_least_squares, predict_residual
 
 
 def true_transition(error: np.ndarray, delta_omega: np.ndarray, A: np.ndarray, B: np.ndarray) -> np.ndarray:
@@ -95,4 +95,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

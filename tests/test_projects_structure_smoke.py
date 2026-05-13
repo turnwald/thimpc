@@ -1,6 +1,9 @@
 import os
+from pathlib import Path
 
 import pytest
+
+from tools.create_student_material import PROJECT_DIRS, REQUIRED_PLANE_NOTEBOOKS
 
 
 def use_headless_matplotlib() -> None:
@@ -8,6 +11,19 @@ def use_headless_matplotlib() -> None:
     import matplotlib
 
     matplotlib.use("Agg", force=True)
+
+
+def test_required_compact_structure_exists():
+    for path in REQUIRED_PLANE_NOTEBOOKS:
+        assert path.exists(), path
+
+    for project_dir in PROJECT_DIRS:
+        assert project_dir.is_dir(), project_dir
+        for name in ["README.md", "config.py", "scenario.py", "plots.py", "animation.py", "walkthrough.ipynb"]:
+            assert (project_dir / name).exists(), project_dir / name
+
+    for path in [Path("tools/create_student_material.py"), Path("tools/check_student_release.py")]:
+        assert path.exists(), path
 
 
 def test_new_project_modules_import():

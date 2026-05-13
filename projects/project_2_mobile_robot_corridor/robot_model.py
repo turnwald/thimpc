@@ -1,8 +1,39 @@
-"""Mobile robot simulator and tracking-error model for Chapter 4 Project 2."""
+"""Mobile robot model and local feedback helpers for Project 2."""
 
 from __future__ import annotations
 
 import numpy as np
+
+
+def lqr_control(
+    x: np.ndarray,
+    x_ref: np.ndarray,
+    K: np.ndarray,
+    u_ref: np.ndarray | None = None,
+) -> np.ndarray:
+    """Compute u = u_ref - K (x - x_ref) with column-vector-safe shapes."""
+    x = np.asarray(x, dtype=float).reshape(-1)
+    x_ref = np.asarray(x_ref, dtype=float).reshape(-1)
+    K = np.asarray(K, dtype=float)
+    if u_ref is None:
+        u_ref = np.zeros(K.shape[0])
+    u_ref = np.asarray(u_ref, dtype=float).reshape(-1)
+    return u_ref - K @ (x - x_ref)
+
+
+def corrected_yaw_rate(
+    omega_r: float,
+    delta_omega: float,
+    omega_min: float | None = None,
+    omega_max: float | None = None,
+) -> float:
+    """Combine nominal yaw rate with a correction and optional actuator bounds."""
+    omega = float(omega_r + delta_omega)
+    if omega_min is not None or omega_max is not None:
+        lo = -np.inf if omega_min is None else omega_min
+        hi = np.inf if omega_max is None else omega_max
+        omega = float(np.clip(omega, lo, hi))
+    return omega
 
 
 def wrap_angle(angle: np.ndarray | float) -> np.ndarray | float:
@@ -63,43 +94,3 @@ def state_from_error(error: np.ndarray, reference: np.ndarray) -> np.ndarray:
     dx = c * xi - s * eta
     dy = s * xi + c * eta
     return np.array([xr + dx, yr + dy, float(wrap_angle(psir + psi_error))], dtype=float)
-
-
-def tracking_error_matrices(dt: float, v_r: float, omega_r: float) -> tuple[np.ndarray, np.ndarray]:
-    """Euler-discretized small-error model for circular tracking."""
-    Ac = np.array(
-        [
-            [0.0, omega_r, 0.0],
-            [-omega_r, 0.0, v_r],
-            [0.0, 0.0, 0.0],
-        ],
-        dtype=float,
-    )
-    Bc = np.array([[0.0], [0.0], [1.0]], dtype=float)
-    return np.eye(3) + dt * Ac, dt * Bc
-
-
-def corridor_bounds(
-    path_angle: np.ndarray,
-    half_width: float = 0.55,
-    narrow_half_width: float = 0.22,
-    narrow_center: float = 0.5 * np.pi,
-    narrow_width: float = 1.4,
-    narrow_offset: float = 0.32,
-    margin: float = 0.0,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Return time-varying lateral bounds eta_min, eta_max for an annular corridor.
-
-    In the narrowed section, the admissible lateral-error interval is shifted by
-    ``narrow_offset``. A positive offset means the reference path ``eta = 0`` can
-    lie outside the allowed interval.
-    """
-    angle = np.asarray(path_angle, dtype=float)
-    wrapped = wrap_angle(angle - narrow_center)
-    inside_narrow = np.abs(wrapped) <= narrow_width / 2.0
-    half = np.full_like(angle, half_width - margin, dtype=float)
-    center = np.zeros_like(angle, dtype=float)
-    half[inside_narrow] = narrow_half_width - margin
-    center[inside_narrow] = narrow_offset
-    half = np.maximum(half, 0.03)
-    return center - half, center + half

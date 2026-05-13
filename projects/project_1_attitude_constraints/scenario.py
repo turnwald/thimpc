@@ -7,10 +7,9 @@ from pathlib import Path
 import numpy as np
 from scipy.linalg import solve_discrete_are
 
-from controllers.lqr import simulate_lqr
-from controllers.saturated_lqr import simulate_saturated_lqr
 from projects._shared.casadi_mpc import LinearCasadiMPC, MPCInfo
 from projects.project_1_attitude_constraints import config
+from projects.project_1_attitude_constraints.baseline_control import simulate_lqr, simulate_saturated_lqr
 from projects.project_1_attitude_constraints.plots import (
     plot_constraint_activity,
     plot_phase_plane,

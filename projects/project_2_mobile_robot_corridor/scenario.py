@@ -7,9 +7,8 @@ from pathlib import Path
 import numpy as np
 from scipy.linalg import solve_discrete_are
 
-from controllers.lqr import lqr_control
-from controllers.nominal_tracker import corrected_yaw_rate
 from projects._shared.casadi_mpc import LinearCasadiMPC
+from projects._shared.mobile_robot import tracking_error_matrices
 from projects.project_2_mobile_robot_corridor import config
 from projects.project_2_mobile_robot_corridor.plots import (
     plot_horizon_comparison,
@@ -18,11 +17,12 @@ from projects.project_2_mobile_robot_corridor.plots import (
     plot_margin,
     plot_top_view,
 )
-from systems.mobile_robot import (
+from projects.project_2_mobile_robot_corridor.robot_model import (
     circular_reference,
+    corrected_yaw_rate,
+    lqr_control,
     state_from_error,
     tracking_error,
-    tracking_error_matrices,
     unicycle_step,
     wrap_angle,
 )

@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from tools.create_student_material import FORBIDDEN_STUDENT_TEXT, convert_notebook, strip_solution_regions, study_notebooks
+from tools.create_student_material import FORBIDDEN_STUDENT_TEXT, convert_notebook, solution_notebooks, strip_solution_regions
 
 
 INSTRUCTOR_RELEASE_MODES = {"instructor", "solutions", "private"}
-NOTEBOOKS = study_notebooks()
+NOTEBOOKS = solution_notebooks()
 
 
 def require_solution_notebook(path: Path) -> None:
@@ -38,10 +38,12 @@ def test_student_strip_removes_instructor_solution(tmp_path, source_name, target
 
     convert_notebook(source_name, target)
     text = notebook_text(target)
+    source_text = notebook_text(source_name)
 
     for marker in FORBIDDEN_STUDENT_TEXT:
         assert marker.lower() not in text.lower()
-    assert "TODO: implement or tune this design choice" in text
+    if "SOLUTION_START" in source_text:
+        assert "TODO: implement or tune this design choice" in text
 
 
 @pytest.mark.parametrize("target_name", NOTEBOOKS.values())
@@ -59,14 +61,20 @@ def test_committed_student_notebooks_have_no_solution_leakage(target_name):
 
 
 @pytest.mark.parametrize(("source_name", "target_name"), NOTEBOOKS.items())
-def test_student_generation_matches_committed_notebooks(tmp_path, source_name, target_name):
+def test_student_generation_produces_clean_compact_notebook(tmp_path, source_name, target_name):
     require_solution_notebook(source_name)
     generated = tmp_path / Path(target_name).name
     convert_notebook(source_name, generated)
 
-    expected = json.loads(target_name.read_text(encoding="utf-8"))
-    actual = json.loads(generated.read_text(encoding="utf-8"))
-    assert actual == expected
+    assert Path(target_name).exists()
+    notebook = json.loads(generated.read_text(encoding="utf-8"))
+    text = notebook_text(generated).lower()
+    for marker in FORBIDDEN_STUDENT_TEXT:
+        assert marker.lower() not in text
+    for cell in notebook["cells"]:
+        if cell.get("cell_type") == "code":
+            assert cell.get("execution_count") is None
+            assert cell.get("outputs") == []
 
 
 def test_strip_solution_regions_rejects_unclosed_marker():

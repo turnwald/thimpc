@@ -15,10 +15,11 @@ before_script:
   - python -m pip install --upgrade pip
   - python -m pip install -r requirements.txt
 
-study_smoke:
+compact_teaching_smoke:
   stage: test
   script:
-    - python -m compileall controllers mpc systems scenarios tools tests
-    - if find studies -name 'walkthrough_solution.ipynb' | grep -q .; then python tools/create_student_material.py; git diff --exit-code studies; fi
+    - python -m compileall projects tools tests
+    - python tools/create_student_material.py --check
+    - git diff --exit-code plane_code projects
     - python -m pytest -q
     - if [ "${CI_COMMIT_BRANCH:-}" = "main" ]; then THIMPC_RELEASE_MODE=public python -m pytest -q; python tools/check_student_release.py; fi

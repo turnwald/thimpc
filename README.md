@@ -12,8 +12,10 @@ plane_code/
   01_lqr.ipynb
   02_mpc.ipynb
   03_mpc_geometry.ipynb
+  04_casadi.ipynb
 
 projects/
+  _shared/
   project_1_attitude_constraints/
   project_2_mobile_robot_corridor/
   project_3_learning_enhanced_prediction/
@@ -27,8 +29,8 @@ notebook itself is the teaching document, with visible mathematics and code.
   CasADi at the end as a formulation tool.
 - `plane_code/03_mpc_geometry.ipynb` teaches feasibility, terminal sets, and
   the stability picture.
-
-The notebooks are meant to be read and run directly from the repository root.
+- `plane_code/04_casadi.ipynb` introduces CasADi syntax for compact MPC
+  formulations.
 
 `projects/` contains Chapter 4 application projects. Students open and run each
 project's `walkthrough.ipynb`; project-local modules keep repeated simulation,
@@ -43,9 +45,6 @@ framework.
 - `projects/project_3_learning_enhanced_prediction/`: least-squares residual
   learning for improved one-step prediction, with validation and closed-loop
   caveats.
-
-The older `studies/` structure is retained during this first migration pass for
-compatibility with supporting examples and validation checks.
 
 ## Environment
 
@@ -73,7 +72,8 @@ For this student-facing branch, run:
 git status
 git branch --show-current
 git diff --stat
-.venv/bin/python -m compileall plane_code projects tools tests
+.venv/bin/python -m compileall projects tools tests
+.venv/bin/python -m pytest -q -rs
 THIMPC_RELEASE_MODE=public .venv/bin/python -m pytest -q -rs
 .venv/bin/python tools/check_student_release.py
 ```
@@ -86,5 +86,5 @@ example:
 .venv/bin/python -m nbconvert --execute --to notebook --output /tmp/thimpc_02_mpc_executed.ipynb plane_code/02_mpc.ipynb
 ```
 
-Generated plots, metrics, notebook execution artifacts, and animations should
-stay under ignored output directories such as `outputs/` or `/tmp`.
+Never push or commit from automation unless the maintainer asks for it
+explicitly.

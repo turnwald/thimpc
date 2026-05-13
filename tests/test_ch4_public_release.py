@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from tools.create_student_material import FORBIDDEN_STUDENT_TEXT, student_notebooks
+from tools.check_student_release import compact_solution_notebooks, strict_public_projection_mode
+from tools.create_student_material import FORBIDDEN_STUDENT_TEXT, PROJECT_DIRS, REQUIRED_PLANE_NOTEBOOKS, student_notebooks
 
 
 NOTEBOOKS = student_notebooks()
@@ -33,16 +34,21 @@ def notebook_text(path: Path) -> str:
     return "\n".join(parts)
 
 
-@pytest.mark.skipif(not public_release_mode(), reason="public release check runs on main or THIMPC_RELEASE_MODE=public")
-def test_public_release_has_no_solution_notebooks():
-    leaked = sorted(Path("studies").rglob("*solution*.ipynb"))
-    leaked += sorted(Path("projects").rglob("*solution*.ipynb"))
-    leaked += sorted(Path("plane_code").rglob("*solution*.ipynb"))
-    leaked += sorted(Path("notebooks_solution").glob("*.ipynb"))
-    leaked += sorted(Path("notebooks").rglob("*_solution.ipynb"))
+def test_required_compact_student_material_exists():
+    for path in REQUIRED_PLANE_NOTEBOOKS:
+        assert path.exists(), path
+    for project_dir in PROJECT_DIRS:
+        assert project_dir.is_dir(), project_dir
+        assert (project_dir / "walkthrough.ipynb").exists()
+
+
+@pytest.mark.skipif(not strict_public_projection_mode(), reason="strict no-solution tree check runs on main/public projection")
+def test_public_projection_has_no_compact_solution_notebooks():
+    leaked = compact_solution_notebooks()
     assert leaked == []
 
 
+@pytest.mark.skipif(not public_release_mode(), reason="public release checks run on main or THIMPC_RELEASE_MODE=public")
 @pytest.mark.parametrize("student_notebook", NOTEBOOKS)
 def test_student_notebooks_have_no_instructor_text_or_outputs(student_notebook):
     text = notebook_text(student_notebook).lower()
@@ -54,3 +60,16 @@ def test_student_notebooks_have_no_instructor_text_or_outputs(student_notebook):
         if cell.get("cell_type") == "code":
             assert cell.get("execution_count") is None
             assert cell.get("outputs") == []
+
+
+def test_no_tracked_generated_outputs():
+    tracked = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+    leaked = []
+    for name in tracked:
+        path = Path(name)
+        parts = set(path.parts)
+        if {"outputs", "figures", "__pycache__"} & parts:
+            leaked.append(name)
+        elif path.name.endswith(("_executed.ipynb", ".pyc", ".pyo")):
+            leaked.append(name)
+    assert leaked == []

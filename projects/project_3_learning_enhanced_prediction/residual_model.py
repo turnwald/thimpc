@@ -1,4 +1,4 @@
-"""Least-squares residual model for Chapter 4 Project 3."""
+"""Least-squares residual model for Project 3."""
 
 from __future__ import annotations
 
@@ -48,4 +48,3 @@ def predict_residual(W: np.ndarray, error: np.ndarray, delta_omega: np.ndarray |
     if Phi.ndim == 1:
         return np.asarray(W, dtype=float) @ Phi
     return Phi @ np.asarray(W, dtype=float).T
-

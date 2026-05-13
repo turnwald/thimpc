@@ -24,13 +24,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-      - name: Validate studies
+      - name: Validate compact teaching material
         run: |
-          python -m compileall controllers mpc systems scenarios tools tests
-          if find studies -name 'walkthrough_solution.ipynb' | grep -q .; then
-            python tools/create_student_material.py
-            git diff --exit-code studies
-          fi
+          python -m compileall projects tools tests
+          python tools/create_student_material.py --check
+          git diff --exit-code plane_code projects
           python -m pytest -q
           if [ "${GITHUB_REF_NAME}" = "main" ]; then
             THIMPC_RELEASE_MODE=public python -m pytest -q

@@ -1,12 +1,13 @@
-"""Create student-facing notebooks from instructor solution notebooks."""
+"""Create student-facing notebooks from compact instructor materials."""
 
 from __future__ import annotations
 
+import argparse
 import json
+import tempfile
 from pathlib import Path
 
 
-STUDIES_DIR = Path("studies")
 PROJECTS_DIR = Path("projects")
 PLANE_CODE_DIR = Path("plane_code")
 SOLUTION_NOTEBOOK_NAME = "walkthrough_solution.ipynb"
@@ -14,18 +15,30 @@ STUDENT_NOTEBOOK_NAME = "walkthrough.ipynb"
 PLANE_SOLUTION_SUFFIX = "_solution.ipynb"
 PLANE_STUDENT_SUFFIX = ".ipynb"
 
+REQUIRED_PLANE_NOTEBOOKS = [
+    PLANE_CODE_DIR / "01_lqr.ipynb",
+    PLANE_CODE_DIR / "02_mpc.ipynb",
+    PLANE_CODE_DIR / "03_mpc_geometry.ipynb",
+    PLANE_CODE_DIR / "04_casadi.ipynb",
+]
+
+PROJECT_DIRS = [
+    PROJECTS_DIR / "project_1_attitude_constraints",
+    PROJECTS_DIR / "project_2_mobile_robot_corridor",
+    PROJECTS_DIR / "project_3_learning_enhanced_prediction",
+]
+
+REQUIRED_PROJECT_WALKTHROUGHS = [
+    project_dir / STUDENT_NOTEBOOK_NAME
+    for project_dir in PROJECT_DIRS
+]
+
 
 def solution_notebooks() -> dict[Path, Path]:
     notebooks = {
         path: path.with_name(STUDENT_NOTEBOOK_NAME)
-        for path in sorted(STUDIES_DIR.glob(f"study_*/{SOLUTION_NOTEBOOK_NAME}"))
+        for path in sorted(PROJECTS_DIR.glob(f"project_*/{SOLUTION_NOTEBOOK_NAME}"))
     }
-    notebooks.update(
-        {
-            path: path.with_name(STUDENT_NOTEBOOK_NAME)
-            for path in sorted(PROJECTS_DIR.glob(f"project_*/{SOLUTION_NOTEBOOK_NAME}"))
-        }
-    )
     notebooks.update(
         {
             path: path.with_name(path.name.removesuffix(PLANE_SOLUTION_SUFFIX) + PLANE_STUDENT_SUFFIX)
@@ -35,23 +48,8 @@ def solution_notebooks() -> dict[Path, Path]:
     return notebooks
 
 
-def study_notebooks() -> dict[Path, Path]:
-    """Return legacy study notebook pairs for older tests and callers."""
-    return {
-        path: path.with_name(STUDENT_NOTEBOOK_NAME)
-        for path in sorted(STUDIES_DIR.glob(f"study_*/{SOLUTION_NOTEBOOK_NAME}"))
-    }
-
-
 def student_notebooks() -> list[Path]:
-    notebooks = sorted(STUDIES_DIR.glob(f"study_*/{STUDENT_NOTEBOOK_NAME}"))
-    notebooks += sorted(PROJECTS_DIR.glob(f"project_*/{STUDENT_NOTEBOOK_NAME}"))
-    notebooks += [
-        path
-        for path in sorted(PLANE_CODE_DIR.glob(f"*{PLANE_STUDENT_SUFFIX}"))
-        if not path.name.endswith(PLANE_SOLUTION_SUFFIX)
-    ]
-    return notebooks
+    return [*REQUIRED_PLANE_NOTEBOOKS, *REQUIRED_PROJECT_WALKTHROUGHS]
 
 
 NOTEBOOKS = solution_notebooks()
@@ -151,9 +149,23 @@ def validate_student_notebook(nb: dict, target_path: Path) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="validate generation in a temporary directory without changing tracked notebooks",
+    )
+    args = parser.parse_args()
+
     notebooks = solution_notebooks()
     if not notebooks:
         print("no solution notebooks found; nothing to generate")
+        return
+    if args.check:
+        with tempfile.TemporaryDirectory(prefix="thimpc_student_material_") as tmp:
+            tmp_root = Path(tmp)
+            for source_name, target_name in notebooks.items():
+                convert_notebook(source_name, tmp_root / target_name)
         return
     for source_name, target_name in notebooks.items():
         convert_notebook(source_name, target_name)
