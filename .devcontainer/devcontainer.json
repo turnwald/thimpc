@@ -5,14 +5,7 @@
     "context": ".."
   },
   "workspaceFolder": "/workspace",
-  "forwardPorts": [8888],
-  "portsAttributes": {
-    "8888": {
-      "label": "JupyterLab",
-      "onAutoForward": "notify"
-    }
-  },
-  "postStartCommand": "bash .devcontainer/start.sh",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
   "customizations": {
     "vscode": {
       "settings": {
