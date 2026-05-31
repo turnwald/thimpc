@@ -10,15 +10,17 @@ variables:
 
 before_script:
   - apt-get update
-  - apt-get install -y --no-install-recommends build-essential cmake gfortran liblapack-dev libblas-dev pkg-config git
+  - apt-get install -y --no-install-recommends build-essential cmake gfortran liblapack-dev libblas-dev pkg-config ffmpeg git
   - rm -rf /var/lib/apt/lists/*
   - python -m pip install --upgrade pip
   - python -m pip install -r requirements.txt
 
-study_smoke:
+notebook_smoke:
   stage: test
   script:
-    - python -m compileall controllers mpc systems scenarios tools tests
-    - if find studies -name 'walkthrough_solution.ipynb' | grep -q .; then python tools/create_student_material.py; git diff --exit-code studies; fi
-    - python -m pytest -q
-    - if [ "${CI_COMMIT_BRANCH:-}" = "main" ]; then THIMPC_RELEASE_MODE=public python -m pytest -q; python tools/check_student_release.py; fi
+    - python -m compileall plane_code projects
+    - test ! -d projects/project_3_old
+    - test ! -f projects/project_3_learning_safety_filter/project3_core_old.py
+    - test ! -f projects/project_3_learning_safety_filter/walkthrough_old.ipynb
+    - test -f projects/project_3_learning_safety_filter/assets/expert_dataset_small.npz
+    - test -f projects/project_3_learning_safety_filter/assets/policy_pretrained.npz

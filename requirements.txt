@@ -1,6 +1,9 @@
 numpy
 scipy
 matplotlib
+pillow
+imageio
+imageio-ffmpeg
 casadi
 osqp
 control

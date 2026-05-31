@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     liblapack-dev \
     libblas-dev \
     pkg-config \
+    ffmpeg \
     git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
